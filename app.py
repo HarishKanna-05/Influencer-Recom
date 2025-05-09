@@ -248,10 +248,31 @@ def main():
     # Initialize Gemini LLM
     llm = get_gemini_llm()
     
+    # In the main function, modify the website analysis handler
     # Handle website analysis
     if analyze_button:
         with st.spinner("Analyzing website and generating marketing strategy..."):
             st.session_state.marketing_strategy = analyze_website(website_url, llm)
+            
+            # Extract recommended categories from the marketing strategy
+            if st.session_state.marketing_strategy:
+                recommended_categories = extract_recommended_categories(st.session_state.marketing_strategy)
+                st.session_state.selected_categories = recommended_categories
+                
+                # Automatically find influencers based on the recommended categories
+                with st.spinner("Finding relevant influencers based on website analysis..."):
+                    all_influencers = load_influencer_data()
+                    
+                    filtered_influencers = []
+                    for influencer in all_influencers:
+                        if any(category in influencer.get("categories", []) for category in recommended_categories) and \
+                           influencer.get("subscriberCount", 0) >= min_subscribers:
+                            filtered_influencers.append(influencer)
+                    
+                    # Sort by subscriber count
+                    filtered_influencers.sort(key=lambda x: x.get("subscriberCount", 0), reverse=True)
+                    
+                    st.session_state.influencers = filtered_influencers[:50]  # Limit to top 50
     
     # Handle influencer search
     if find_influencers_button:
@@ -364,6 +385,60 @@ def main():
                     st.info("No trending keywords found.")
         else:
             st.info("Click 'Analyze Current Trends' to see trending hashtags and keywords.")
+
+# Add this function after the analyze_website function
+def extract_recommended_categories(marketing_strategy):
+    """Extract recommended influencer categories from the marketing strategy"""
+    if not marketing_strategy:
+        return []
+    
+    # Look for influencer categories in the marketing strategy text
+    categories = []
+    for category in CATEGORIES:
+        # Remove "Tamil " prefix for matching
+        category_keyword = category.replace("Tamil ", "").lower()
+        if category_keyword in marketing_strategy.lower():
+            categories.append(category)
+    
+    # If no categories found, try to match broader terms
+    if not categories:
+        category_mapping = {
+            "tech": "Tamil tech",
+            "education": "Tamil education",
+            "movie": "Tamil movies",
+            "film": "Tamil movies",
+            "cinema": "Tamil movies",
+            "beauty": "Tamil beauty",
+            "fashion": "Tamil fashion",
+            "style": "Tamil fashion",
+            "gaming": "Tamil gaming",
+            "game": "Tamil gaming",
+            "music": "Tamil music",
+            "song": "Tamil music",
+            "cook": "Tamil cooking",
+            "food": "Tamil cooking",
+            "recipe": "Tamil cooking",
+            "comedy": "Tamil comedy",
+            "funny": "Tamil comedy",
+            "humor": "Tamil comedy",
+            "vlog": "Tamil vlogs",
+            "lifestyle": "Tamil lifestyle",
+            "fitness": "Tamil fitness",
+            "workout": "Tamil fitness",
+            "exercise": "Tamil fitness",
+            "travel": "Tamil travel",
+            "tourism": "Tamil travel",
+            "business": "Tamil business",
+            "entrepreneur": "Tamil business",
+            "motivation": "Tamil motivation",
+            "inspire": "Tamil motivation"
+        }
+        
+        for keyword, category in category_mapping.items():
+            if keyword in marketing_strategy.lower() and category in CATEGORIES:
+                categories.append(category)
+    
+    return list(set(categories))  # Remove duplicates
 
 if __name__ == "__main__":
     main()

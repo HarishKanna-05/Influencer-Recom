@@ -43,20 +43,20 @@ influencers_collection.create_index([("subscriberCount", pymongo.DESCENDING)])
 # Tamil categories to search for
 CATEGORIES = [
     "Tamil comedy",
-    # "Tamil cooking",
+    "Tamil cooking",
     "Tamil tech",
-    # "Tamil beauty",
+    "Tamil beauty",
     "Tamil fashion",
-    # "Tamil gaming",
-     "Tamil education",
-    # "Tamil music",
-     "Tamil movies",
-    # "Tamil vlogs",
-    # "Tamil fitness",
-    # "Tamil travel",
-    # "Tamil lifestyle",
-    #  "Tamil business",
-    # "Tamil motivation"
+    "Tamil gaming",
+    "Tamil education",
+    "Tamil music",
+    "Tamil movies",
+    "Tamil vlogs",
+    "Tamil fitness",
+    "Tamil travel",
+    "Tamil lifestyle",
+    "Tamil business",
+    "Tamil motivation"
 ]
 
 def search_channels(category: str, max_results: int = 10) -> List[Dict[str, Any]]:
