@@ -1,0 +1,214 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """analyse this website https://www.rajalakshmi.org and give me what kind of product the are selling theme of the company and the target audience """. If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.google.com
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Input https://www.rajalakshmi.org into index 7
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 13:
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.google.com/search?q=https+www+rajalakshmi+org&sca_esv=1f8ae36279fff098&sxsrf=AHTn8zp1kk4Aw6rjO2tojvhcf_yk5rfq0A%3A1746773022914&source=hp&ei=HqQdaKDZNM6jvr0PrcP_qAY&iflsig=ACkRmUkAAAAAaB2yLt2UIc26WAXJHkmqI7grwBHtr52B&oq=https%3A%2F%2Fwww.rajalakshmi.org&gs_lp=Egdnd3Mtd2l6IhtodHRwczovL3d3dy5yYWphbGFrc2htaS5vcmcqAggBMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB5IxTxQAFgAcAB4AJABAJgBygGgAcoBqgEDMi0xuAEByAEA-AEBmAIBoALRAZgDAJIHAzItMaAHgwOyBwMyLTG4B9EB&sclient=gws-wiz
+Available tabs:
+[TabInfo(page_id=0, url='chrome://profile-picker/', title="Who's using Chrome?"), TabInfo(page_id=1, url='https://www.google.com/search?q=https+www+rajalakshmi+org&sca_esv=1f8ae36279fff098&sxsrf=AHTn8zp1kk4Aw6rjO2tojvhcf_yk5rfq0A%3A1746773022914&source=hp&ei=HqQdaKDZNM6jvr0PrcP_qAY&iflsig=ACkRmUkAAAAAaB2yLt2UIc26WAXJHkmqI7grwBHtr52B&oq=https%3A%2F%2Fwww.rajalakshmi.org&gs_lp=Egdnd3Mtd2l6IhtodHRwczovL3d3dy5yYWphbGFrc2htaS5vcmcqAggBMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB5IxTxQAFgAcAB4AJABAJgBygGgAcoBqgEDMi0xuAEByAEA-AEBmAIBoALRAZgDAJIHAzItMaAHgwOyBwMyLTG4B9EB&sclient=gws-wiz', title='https www rajalakshmi org - Google Search')]
+Interactive elements from top layer of the current page inside the viewport:
+[Start of page]
+Accessibility links
+Skip to main content
+Accessibility help
+Accessibility feedback
+[0]<a Go to Google Home/>
+[1]<textarea ;false;q;combobox;Search>https www rajalakshmi org/>
+[2]<div Clear;button/>
+[3]<div Search by voice;button/>
+[4]<div button;Search by image/>
+[5]<button Search;submit/>
+[6]<a Search Labs;button/>
+[7]<a false;button;Google apps/>
+[8]<a false;Google Account: Harish Kanna  
+(harishkanna2004@gmail.com);button/>
+Filters and topics
+[9]<a link>All/>
+[10]<a link>Images/>
+[11]<a link>Videos/>
+[12]<a link>News/>
+[13]<a link>Short videos/>
+[14]<a link>Shopping/>
+[15]<a link>Forums/>
+[16]<div false;button>More/>
+[17]<div false;button>Tools/>
+Ads
+Sponsored
+[18]<a Admissions Open 2025 | Engineering Admission 2025
+rajalakshmi.org
+https://www.rajalakshmi.org/>
+[19]<img />
+[20]<div Why this ad?;button/>
+Explore TNEA 2024 cutoffs at
+Rajalakshmi
+Engineering College! Top-ranked, NAAC A++, NIRF. Discover your future! Check TNEA 2024...
+[21]<a Apply Now
+Apply As a Prospective Student And Explore Our Programmes./>
+[22]<a Check Your Eligibility
+Read Through the Information To Check Your Eligibility./>
+[23]<a Contact Admissions
+REC ranked Top 10% in the country Under Engineering category/>
+[24]<a Visit Campus
+Open Doors to Excellence | REC Located at Thandalam, Chennai/>
+[25]<a Programs Offered
+Our Programs Include B.Tech In Information Technology And More./>
+Search Results
+Web result with site links
+[26]<a Home | Rajalakshmi Engineering College (REC)
+Rajalakshmi Engineering College
+https://www.rajalakshmi.org/>
+[27]<img />
+[28]<div About this result;button/>
+Rajalakshmi
+Engineering College (REC), Chennai.
+[29]<a Curriculum and Syllabus/>
+Rajalakshmi Engineering College (REC), Chennai. ... Rajalakshmi ...
+[30]<a Rajalakshmi Engineering .../>
+Rajalakshmi Engineering College (REC), Chennai.
+[31]<a Admission Application Form/>
+Rajalakshmi Engineering College, Rajalakshmi Nagar Thandalam ...
+[32]<a Contact Us/>
+e-mail : cityoffice@rajalakshmi.edu.in. Website : www.rajalakshmi ...
+[33]<a UG Admissions/>
+Hallmark of Excellence. 2nd MOST PREFERRED CAMPUS FOR ...
+[34]<a More results from rajalakshmi.org »/>
+[35]<a Login Page
+rajalakshmi.in
+http://rajalakshmi.in/>
+[36]<div About this result;button/>
+Email This field is required Not Valid Email. Password. This field is required. Sign inSigned in. SignUp for Parents and Alumni. Forgot Password.
+[37]<a Home | REC-CIS - rajalakshmicolleges.org
+rajalakshmicolleges.org
+http://www.rajalakshmicolleges.org
+› moodle/>
+[38]<div About this result;button/>
+... 2275 pixels below - scroll or extract content to see more ...
+Current step: 3/100Current date and time: 2025-05-09 12:14
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Success",
+    "memory": "I have searched for the website on Google. Now I need to click on the link to navigate to the website.",
+    "next_goal": "Click on the link to navigate to https://www.rajalakshmi.org."
+  },
+  "action": [
+    {
+      "click_element": {
+        "index": 26
+      }
+    }
+  ]
+}

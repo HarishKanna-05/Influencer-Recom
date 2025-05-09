@@ -1,0 +1,380 @@
+ SystemMessage 
+You are an AI agent designed to automate browser tasks. Your goal is to accomplish the ultimate task following the rules.
+
+# Input Format
+Task
+Previous steps
+Current URL
+Open Tabs
+Interactive Elements
+[index]<type>text</type>
+- index: Numeric identifier for interaction
+- type: HTML element type (button, input, etc.)
+- text: Element description
+Example:
+[33]<button>Submit Form</button>
+
+- Only elements with numeric indexes in [] are interactive
+- elements without [] provide only context
+
+# Response Rules
+1. RESPONSE FORMAT: You must ALWAYS respond with valid JSON in this exact format:
+{"current_state": {"evaluation_previous_goal": "Success|Failed|Unknown - Analyze the current elements and the image to check if the previous goals/actions are successful like intended by the task. Mention if something unexpected happened. Shortly state why/why not",
+"memory": "Description of what has been done and what you need to remember. Be very specific. Count here ALWAYS how many times you have done something and how many remain. E.g. 0 out of 10 websites analyzed. Continue with abc and xyz",
+"next_goal": "What needs to be done with the next immediate action"},
+"action":[{"one_action_name": {// action-specific parameter}}, // ... more actions in sequence]}
+
+2. ACTIONS: You can specify multiple actions in the list to be executed in sequence. But always specify only one action name per item. Use maximum {max_actions} actions per sequence.
+Common action sequences:
+- Form filling: [{"input_text": {"index": 1, "text": "username"}}, {"input_text": {"index": 2, "text": "password"}}, {"click_element": {"index": 3}}]
+- Navigation and extraction: [{"go_to_url": {"url": "https://example.com"}}, {"extract_content": {"goal": "extract the names"}}]
+- Actions are executed in the given order
+- If the page changes after an action, the sequence is interrupted and you get the new state.
+- Only provide the action sequence until an action which changes the page state significantly.
+- Try to be efficient, e.g. fill forms at once, or chain actions where nothing changes on the page
+- only use multiple actions if it makes sense.
+
+3. ELEMENT INTERACTION:
+- Only use indexes of the interactive elements
+- Elements marked with "[]Non-interactive text" are non-interactive
+
+4. NAVIGATION & ERROR HANDLING:
+- If no suitable elements exist, use other functions to complete the task
+- If stuck, try alternative approaches - like going back to a previous page, new search, new tab etc.
+- Handle popups/cookies by accepting or closing them
+- Use scroll to find elements you are looking for
+- If you want to research something, open a new tab instead of using the current tab
+- If captcha pops up, try to solve it - else try a different approach
+- If the page is not fully loaded, use wait action
+
+5. TASK COMPLETION:
+- Use the done action as the last action as soon as the ultimate task is complete
+- Dont use "done" before you are done with everything the user asked you, except you reach the last step of max_steps. 
+- If you reach your last step, use the done action even if the task is not fully finished. Provide all the information you have gathered so far. If the ultimate task is completly finished set success to true. If not everything the user asked for is completed set success in done to false!
+- If you have to do something repeatedly for example the task says for "each", or "for all", or "x times", count always inside "memory" how many times you have done it and how many remain. Don't stop until you have completed like the task asked you. Only call done after the last step.
+- Don't hallucinate actions
+- Make sure you include everything you found out for the ultimate task in the done text parameter. Do not just say you are done, but include the requested information of the task. 
+
+6. VISUAL CONTEXT:
+- When an image is provided, use it to understand the page layout
+- Bounding boxes with labels on their top right corner correspond to element indexes
+
+7. Form filling:
+- If you fill an input field and your action sequence is interrupted, most often something changed e.g. suggestions popped up under the field.
+
+8. Long tasks:
+- Keep track of the status and subresults in the memory. 
+
+9. Extraction:
+- If your task is to find information - call extract_content on the specific pages to get and store the information.
+Your responses must be always JSON with the specified format.
+
+ HumanMessage 
+Your ultimate task is: """analyse this website https://www.rajalakshmi.org and give me what kind of product the are selling theme of the company and the target audience """. If you achieved your ultimate task, stop everything and use the done action in the next step to complete the task. If not, continue as usual.
+
+ HumanMessage 
+Example output:
+
+ AIMessage 
+
+
+ ToolMessage 
+Browser started
+
+ HumanMessage 
+[Your task history memory starts here]
+
+ HumanMessage 
+Action result: 🔗  Opened new tab with https://www.google.com
+
+ HumanMessage 
+Action result: 🔍  Scrolled down the page by 1000 pixels
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: ⌨️  Input https://www.rajalakshmi.org into index 7
+
+ HumanMessage 
+Action result: Something new appeared after action 1 / 2
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 13:
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 🖱️  Clicked button with index 26: Home | Rajalakshmi Engineering College (REC)
+
+ AIMessage 
+```json
+{
+    "state_analysis": "Successfully navigated to the website https://www.rajalakshmi.org. The current view is the homepage of Rajalakshmi Engineering College (REC).",
+    "progress_evaluation": "20% - The website has been accessed. The next step is to analyze its content to determine the product, theme, and target audience.",
+    "challenges": [],
+    "next_steps": [
+        "Extract all text content from the current page to get a comprehensive overview.",
+        "Analyze the extracted text to identify keywords related to products/services, company theme, and target audience.",
+        "Navigate to 'About' or similar sections if the homepage doesn't provide enough information."
+    ],
+    "reasoning": "The homepage already provides strong clues (e.g., 'Rajalakshmi Engineering College', 'Admissions', 'Academics', 'Placements'). Extracting text will help confirm these initial observations and gather more details to fulfill the user's request. If the homepage is insufficient, exploring 'About Us' or equivalent sections will be necessary."
+}
+```
+
+ AIMessage 
+
+
+ ToolMessage 
+
+
+ HumanMessage 
+Action result: 📄  Extracted from page
+: ```json
+{
+  "products_services": [
+    {
+      "category": "Educational Programs",
+      "items": [
+        "Undergraduate (UG) Admissions in various engineering disciplines",
+        "Postgraduate (PG) Admissions in various engineering disciplines and Management Studies",
+        "Accelerated Masters programs",
+        "Specific Departments/Disciplines offered: Aeronautical Engineering, Automobile Engineering, Biomedical Engineering, Biotechnology, Chemical Engineering, Civil Engineering, Computer Science & Engineering (including specializations in Cyber Security, Business Systems, Design), Electrical & Electronics Engineering, Electronics & Communication Engineering, Food Technology, Information Technology (including specializations in Artificial Intelligence & Machine Learning, Artificial Intelligence & Data Science), Mechanical Engineering, Mechatronics Engineering, Robotics & Automation, Humanities & Sciences, Management Studies (MBA)."
+      ]
+    },
+    {
+      "category": "Academic Support and Resources",
+      "items": [
+        "Curriculum and Syllabus provision",
+        "Academic Schedule",
+        "Course Materials",
+        "Students Handbook",
+        "REC-GATE Training",
+        "Library services",
+        "IT Infrastructure",
+        "Lecture Capturing System",
+        "Research Centre and Facilities",
+        "Externally and Internally Funded Projects",
+        "Centres of Excellence",
+        "Projects & Patents support",
+        "DST FIST Lab"
+      ]
+    },
+    {
+      "category": "Student Life and Development",
+      "items": [
+        "YUVA (student activities)",
+        "IEEE Student Branch",
+        "NSS (National Service Scheme)",
+        "E-Yantra Club",
+        "Technical Societies Activities",
+        "Entrepreneurship Development Cell",
+        "Sports facilities and activities",
+        "Student Services",
+        "Industry - Institution Interaction Cell (IIIC)",
+        "Prizes & Awards"
+      ]
+    },
+    {
+      "category": "Career Services",
+      "items": [
+        "Placement Cell operations",
+        "Placement Training Programs",
+        "Employability Training Camp",
+        "Facilitation of internships (e.g., MEMS & Microfluidics)"
+      ]
+    },
+    {
+      "category": "Campus Facilities",
+      "items": [
+        "Administration Services",
+        "Canteen",
+        "Hostel",
+        "Transport",
+        "Health Centre",
+        "Security",
+        "Green Campus initiatives (Energy Conservation, Water Conservation)",
+        "Infrastructure and Maintenance"
+      ]
+    },
+    {
+      "category": "Professional Development and Community Engagement",
+      "items": [
+        "Online Faculty Development Programmes (FDPs)",
+        "Alumni relations and events",
+        "IQAC (Internal Quality Assurance Cell) activities",
+        "NAAC accreditation support"
+      ]
+    },
+    {
+      "category": "Financial Services",
+      "items": [
+        "Online College Fee payment",
+        "Online Exam Fee payment"
+      ]
+    }
+  ],
+  "company_theme": [
+    "Engineering Excellence: Focus on providing high-quality engineering and technical education, evidenced by numerous departments and specializations.",
+    "Holistic Development: Stated aim of \"Nurturing Holistic Individuals\" through a balance of academics and extracurricular activities.",
+    "Career Focused: Strong emphasis on placements (\"1640+ Placement Offers\") and industry interaction.",
+    "Research and Innovation: Dedicated research centers, funded projects, and encouragement for patents.",
+    "Accreditation and Recognition: Highlighting NIRF rankings, accreditations, and approvals as marks of quality.",
+    "Student-Centric Approach: Provision of extensive facilities, student support services, and academic resources.",
+    "Global Outlook and Societal Impact: Indicated by membership in the United Nations Academic Impact.",
+    "Legacy and Professionalism: Testimonials emphasize the college as a \"leading institution\" and \"professionally excellent.\"",
+    "Continuous Improvement: Evident through IQAC, NAAC processes, and regular updates on achievements."
+  ],
+  "target_audience": [
+    "Prospective undergraduate students seeking engineering and technology degrees.",
+    "Prospective postgraduate students seeking advanced degrees in engineering, technology, and management (MBA).",
+    "Parents of prospective students.",
+    "Recruiting companies and organizations looking for engineering and management graduates.",
+    "Academics and researchers seeking faculty positions, collaborations, or professional development (e.g., FDPs, project associate roles).",
+    "Alumni of the college.",
+    "Industry partners for MOUs and collaborations.",
+    "Regulatory and accreditation bodies (e.g., AICTE, NAAC, NBA)."
+  ]
+}
+```
+
+ HumanMessage 
+[Task history memory ends]
+[Current state starts here]
+The following is one-time information - if you need to remember it write it to memory:
+Current url: https://www.rajalakshmi.org/
+Available tabs:
+[TabInfo(page_id=0, url='chrome://profile-picker/', title="Who's using Chrome?"), TabInfo(page_id=1, url='https://www.rajalakshmi.org/', title='Home | Rajalakshmi Engineering College (REC)')]
+Interactive elements from top layer of the current page inside the viewport:
+[Start of page]
+[0]<a />
+[1]<img />
+[2]<a />
+[3]<img />
+[4]<a Admissions/>
+|
+[5]<a Fee Link/>
+|
+[6]<a Contact Us/>
+|
+[7]<a AQAR/>
+[8]<a About/>
+[9]<a Department/>
+[10]<a COE/>
+[11]<a Academics/>
+[12]<a Admissions/>
+[13]<a Facilities/>
+[14]<a Student Life/>
+[15]<a Placements/>
+[16]<a Research/>
+[17]<a IIC/>
+[18]<a IIIC/>
+[19]<a Alumni/>
+[20]<a IR/>
+[21]<a IQAC/>
+[22]<a NAAC/>
+[23]<div listbox>Admissions
+Engineer Your Future
+Campus Placements
+1640+ Placement Offers
+The Batch of 2023 has received 1640+ offers (as on 10.07.2023) from some of the leading companies.
+Life at REC
+Nurturing Holistic Individuals
+In addition to academics, our students get a holistic exposure to extra curricular activities such as sports, music, dance & cultural festivals./>
+[24]<a Learn more about the admissions process, financial aid, and other resources available to prospective students/>
+[25]<a button>Previous/>
+[26]<a button>Next/>
+Announcements
+Online Faculty Development Programme (FDP)
+[27]<img />
+"AI & ML Applications for Next Generation Engineers”, scheduled from 19th May to 29th May 2025
+[28]<a Click here/>
+to VIEW the BROCHURE
+REVALUATION APPLICATION FORM
+[29]<img />
+Circular for the revaluation (End semester exam Nov./Dec. - 2024) - I yr. UG Programmes.
+Click here
+to VIEW/DOWNLOAD the CIRCULAR
+Click here
+to VIEW/DOWNLOAD the PHOTOCOPY APPLICATION FORM
+Click here
+to VIEW/DOWNLOAD the REVALUATION APPLICATION FORM
+.
+POSITIONS OPEN FOR DST PROJECT
+Two positions of Project Associate in a Govt of India Research Project are open.
+Please Click here
+to VIEW the ADVERTISEMENT.
+POSITIONS OPEN. BE A PART OF OUR LEGACY
+Academic / Leadership / Non Academic Positions OPEN.
+Please Click here
+to APPLY.
+NIRF 2022
+REC is ranked 86th in the country under Engineering category.
+NIRF 2021
+REC is Ranked 95th in the country under Engineering category.
+NIRF 2020
+REC is Ranked Top 10% amongst Technical Institutions India under NIRF.
+Dataquest T-School Survey Rankings 2019
+REC is ranked 15 in India's Top T-Schools (Private) by Dataquest T-School Survey 2019.
+REC in Top 20 Engineering Colleges in India
+REC is ranked 20th in Top 100 Private Engineering Colleges in India & 6th in Top 20 Engineering Colleges with Excellent Industry Exposure by Higher Education Review Magazine. Thank you Students, Parents, Faculty & Staff!.
+TOP 100 PRIVATE Engineering Colleges - HER
+[30]<img />
+REC is ranked 21st in Top 100 Private Engineering Colleges in India & 13th in Top 20 Engineering Colleges in India in Placements in the Top 100 PRIVATE ENGINEERING COLLEGES SURVEY 2016 by Higher Education Review.
+TOP ENGINEERING INSTITUTE
+[31]<img />
+REC is listed as ONE of the TOP PRIVATE ENGINEERING INSTITUTE in the TIMES ENGINEERING INSTITUTE RANKING SURVEY 2016.
+[32]<a Click here/>
+for details.
+INTERNSHIP
+We provide opportunities to the students interested in doing internship on "MEMS & Microfluidics". If you are interested in doing an internshiip, please email your profile to head.cemm@rajalakshmi.edu.in.
+[33]<a Click here/>
+for details.
+Events
+[34]<img />
+Credit Course on Cyber Security by TCS
+23.02.2022 to 07.03.2022 | REC
+[35]<a View Details/>
+[36]<img />
+REC 20th Graduation Day
+Testimonials
+Delighted to be with a leading institution—REC, interacting with the faculty and students. Research context in education is essential for the future. I see good progress has been made in this direction, especially creating Centres of Excellence.
+It is a great honour to talk to the students of Rajalakshmi Engineering College on visioning for India.
+Dr C. Sylendra Babu. IPS
+Additional Director General of Police (Coastal Security)
+Admissions Open:
+[37]<a UG/>
+|
+[38]<a PG/>
+... 1497 pixels below - scroll or extract content to see more ...
+Current step: 5/100Current date and time: 2025-05-09 12:15
+
+ RESPONSE
+{
+  "current_state": {
+    "evaluation_previous_goal": "Success",
+    "memory": "I have successfully extracted the content from the website and identified the products/services, company theme, and target audience. The task is complete.",
+    "next_goal": "Provide the gathered information to the user and mark the task as done."
+  },
+  "action": [
+    {
+      "done": {
+        "text": "The website https://www.rajalakshmi.org is for Rajalakshmi Engineering College (REC). \n\n**Products/Services:**\nREC primarily offers educational programs, including undergraduate (UG) and postgraduate (PG) degrees in various engineering disciplines (Aeronautical, Automobile, Biomedical, Biotechnology, Chemical, Civil, Computer Science & Engineering with specializations, Electrical & Electronics, Electronics & Communication, Food Technology, Information Technology with specializations, Mechanical, Mechatronics, Robotics & Automation) and Management Studies (MBA). They also provide academic support (curriculum, library, IT infrastructure, research facilities), student life and development programs (clubs, sports, entrepreneurship support), career services (placement cell, training), campus facilities (hostel, transport, health centre), professional development for faculty, and financial services for fee payments.\n\n**Company Theme:**\nThe theme of REC revolves around:\n*   **Engineering Excellence:** Focus on high-quality technical education.\n*   **Holistic Development:** Aiming to nurture well-rounded individuals through academics and extracurriculars.\n*   **Career Focused:** Strong emphasis on placements and industry connections.\n*   **Research and Innovation:** Support for research activities and projects.\n*   **Accreditation and Recognition:** Highlighting rankings and accreditations as quality indicators.\n*   **Student-Centric Approach:** Providing comprehensive student support and resources.\n\n**Target Audience:**\nThe primary target audience includes:\n*   Prospective undergraduate and postgraduate students seeking engineering, technology, and management degrees.\n*   Parents of these prospective students.\n*   Recruiting companies looking for engineering and management graduates.\n*   Academics and researchers.\n*   Alumni of the college.\n*   Industry partners for collaborations.",
+        "success": true
+      }
+    }
+  ]
+}
