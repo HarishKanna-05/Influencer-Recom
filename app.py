@@ -94,8 +94,10 @@ def get_gemini_llm():
         return None
     
     return ChatGoogleGenerativeAI(
-        model='gemini-2.5-pro-exp-03-25',
-        api_key=SecretStr(api_key)
+        model='gemini-2.5-flash',
+        api_key=SecretStr(api_key),
+        temperature=0.7,
+        max_tokens=8192
     )
 
 # Load influencer data from JSON file

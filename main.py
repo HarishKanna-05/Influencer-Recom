@@ -18,8 +18,8 @@ initial_actions = [
 	{'open_tab': {'url': 'https://www.google.com'}},
 	{'scroll_down': {'amount': 1000}},
 ]
-llm = ChatGoogleGenerativeAI(model='gemini-2.5-pro-exp-03-25',api_key=SecretStr(os.getenv('GEMINI_API_KEY')))
-planner_llm = ChatGoogleGenerativeAI(model='gemini-2.5-pro-exp-03-25',api_key=SecretStr(os.getenv('GEMINI_API_KEY')))
+llm = ChatGoogleGenerativeAI(model='gemini-2.5-flash',api_key=SecretStr(os.getenv('GEMINI_API_KEY')))
+planner_llm = ChatGoogleGenerativeAI(model='gemini-2.5-flash',api_key=SecretStr(os.getenv('GEMINI_API_KEY')))
 
 async def main():
     agent = Agent(
